@@ -58,7 +58,7 @@ class SplashScreen : AppCompatActivity() {
 
    private fun getPairedDevices(){
        if(DeviceData.isBTEnabled){
-
+           //TODO Implement a function for getting all the paired devices
 
        }else{
           logMessage()
