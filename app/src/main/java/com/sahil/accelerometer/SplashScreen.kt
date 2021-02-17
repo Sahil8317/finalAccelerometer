@@ -1,7 +1,11 @@
 package com.sahil.accelerometer
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +17,9 @@ class SplashScreen : AppCompatActivity() {
     private val btModuleName = "HC-06"
     private var bluetoothAdapterRequestCode = 123
     private var bAdapter : BluetoothAdapter?=null
-    val btPairedDeviceList = ArrayList<BluetoothDeviceData>()
+   private val btPairedDeviceList = ArrayList<BluetoothDeviceData>()
+    private val availableDevices = ArrayList<BluetoothDeviceData>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
@@ -42,7 +48,7 @@ class SplashScreen : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode==bluetoothAdapterRequestCode && resultCode== RESULT_OK && data!= null){
+        if(requestCode==bluetoothAdapterRequestCode && resultCode== RESULT_OK ){
             Toast.makeText(applicationContext,"Enabled",Toast.LENGTH_SHORT).show()
         }else{
             Toast.makeText(applicationContext,"Enable Bluetooth firstly",Toast.LENGTH_LONG).show()
@@ -50,18 +56,74 @@ class SplashScreen : AppCompatActivity() {
     }
 
     private fun searchForAvailableDevices(){
-        if(DeviceData.isBTEnabled && bAdapter!!.isEnabled){
-            //ToDO  Implement function for searching all the BT Devices
+        try {
+            if(DeviceData.isBTEnabled && bAdapter!!.isEnabled){
+                if(bAdapter!!.isDiscovering){
+                    bAdapter!!.cancelDiscovery()
+                }
+                val discover = bAdapter!!.startDiscovery()
+                Log.d("Starting",discover.toString())
+                val intentFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+                registerReceiver(btReceiver,intentFilter)
+                //TODO Connect with the device named HC-06
 
+                if(availableDevices.isNotEmpty()){
+                    val moduleInfo:BluetoothDeviceData?=null
+                    for(device in availableDevices){
+                        if(device.deviceName==btModuleName){
+                           moduleInfo!!.deviceName = device.deviceName
+                            moduleInfo.deviceAddress=device.deviceAddress
+                            break
+                        }
+                    }
+                    if(moduleInfo==null){
+                        Log.d("not found","Not Found in Paired Devices")
+                        // Again Search for available devices
+                        // in second stage add a alert dialogue box for again searching the device
+                        searchForAvailableDevices()
+                    }else{
+                        //TODO connect with this device name (HC-06) ie module info implement same function
+                        connectToModule(moduleInfo,"FromSearch")
+                    }
+                }
+            }else{
+                logMessage()
+            }
 
-        }else{
-          logMessage()
+        }catch (ex:Exception){
+            println(ex)
+        }
+    }
+
+    private fun connectToModule(moduleInfo: BluetoothDeviceData,tag:String){
+        // TODO 1. Implement this Function
+        try {
+            if(tag == "FromSearch"){
+
+            }else{
+
+            }
+
+        }catch (ex:Exception){
+            Log.d("Exception",ex.toString())
+            println(ex)
+        }
+
+    }
+    private val btReceiver = object :BroadcastReceiver(){
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val action = intent!!.action
+            if(action==BluetoothDevice.ACTION_FOUND){
+                val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                availableDevices.add(BluetoothDeviceData(device!!.name,device.address))
+            }else{
+                Log.d("unable","receiving failed")
+            }
         }
     }
 
    private fun getPairedDevices(){
        if(DeviceData.isBTEnabled && bAdapter!!.isEnabled) {
-           //TODO Implement a function for getting all the paired devices
                try {
            val btDevices = bAdapter!!.bondedDevices
            if (btDevices.size > 0) {
@@ -95,18 +157,19 @@ class SplashScreen : AppCompatActivity() {
                 break
             }
         }
-        //TODO connect with this device name (HC-06) ie module info
-    }
+        if(moduleInfo==null){
+            Log.d("not found","Not Found in Paired Devices")
+            searchForAvailableDevices()
+        }else{
+            //TODO connect with this device name (HC-06) ie module info
+            connectToModule(moduleInfo,"FromPairedDevice")
 
+        }
+    }
 
     private fun logMessage(){
         Log.d("Unable","BT Disabled")
     }
-
-
-
-
-
 
 
 }
