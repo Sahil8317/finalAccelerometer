@@ -17,26 +17,26 @@ class DeviceData {
          userReference = context.getSharedPreferences("BTData",Context.MODE_PRIVATE)
     }
 
-   private fun saveNodeMCUData(nodeMcuDeviceName:String,nodeMcuDeviceAddress:String,nodeMcuDeviceUUID:String){
+    fun saveNodeMCUData(nodeMcuDeviceName:String,nodeMcuDeviceAddress:String,nodeMcuDeviceUUID:String){
         this.nodeMcuDeviceAddress = nodeMcuDeviceAddress
         this.nodeMcuDeviceName = nodeMcuDeviceName
     }
 
     // Save Data to user Preference
-   private fun saveBTData(){
+    fun saveBTData(){
         val editor =  userReference!!.edit()
         editor.putString("nodeMcuDeviceAddress",nodeMcuDeviceAddress)
         editor.putString("nodeMcuDeviceName",nodeMcuDeviceName)
         editor.apply()
     }
 
-   private fun getDeviceData(){
+    fun getDeviceData(){
          address = userReference!!.getString("nodeMcuDeviceAddress","emptyAddress")
          deviceName = userReference!!.getString("nodeMcuDeviceName","emptyName")
 
     }
 
-   private fun isLoggedInFirstTime(){
+    fun isLoggedInFirstTime(){
         val data = userReference!!.getString("nodeMcuDeviceAddress","empty")
         if(data.equals("empty")){
             isAlreadyUser=false
