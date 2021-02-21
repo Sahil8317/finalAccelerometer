@@ -4,23 +4,12 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.*
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.Switch
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.GoogleApi
-import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.gms.location.LocationSettingsStatusCodes
-import kotlinx.coroutines.NonCancellable.start
-import com.google.android.gms.common.api.ResolvableApiException as ResolvableApiException1
 
 class SplashScreen : AppCompatActivity() {
 
@@ -40,18 +29,7 @@ class SplashScreen : AppCompatActivity() {
         setContentView(R.layout.activity_splash_screen)
         bAdapter = BluetoothAdapter.getDefaultAdapter()
         checkPermission()
-        val data = DeviceData(this)
-        data.isLoggedInFirstTime()
 
-//        if(DeviceData.isAlreadyUser){
-//            // for old user
-//            getPairedDevices()
-//        }else{
-//            // means the user is new
-//            checkPermission()
-//            startDiscovery()
-//            searchForAvailableDevices()
-//        }
     }
 
     override fun onResume() {
@@ -132,7 +110,7 @@ class SplashScreen : AppCompatActivity() {
                 Toast.makeText(applicationContext,"searching Devices",Toast.LENGTH_SHORT).show()
                 val intentFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
                 registerReceiver(btReceiver,intentFilter)
-                println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+              //  println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 //TODO Connect with the device named HC-06
             }else{
                 logMessage()
