@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.activity_search_and_connect.*
 
 class SearchAndConnectActivity : AppCompatActivity() {
 
-    private val btModuleName = "HC-06"
+    private val btModuleName = "LG OM4560(E5)"
     private val btPairedDeviceList = ArrayList<BluetoothDeviceData>()
     private val availableDevices = ArrayList<BluetoothDeviceData>()
     private val availableBluetoothDevice = ArrayList<BluetoothDevice>()   // contains object of bluetooth device in built
@@ -24,6 +24,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_and_connect)
         search_animation.visibility = View.INVISIBLE
+        connect_animation.visibility = View.INVISIBLE
         bAdapter = BluetoothAdapter.getDefaultAdapter()
         val data = DeviceData(this)
         data.isLoggedInFirstTime()
@@ -115,13 +116,11 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     availableDevices.add(BluetoothDeviceData(device!!.name,device.address))
                     availableBluetoothDevice.add(device)
                     Toast.makeText(applicationContext,device.name.toString(), Toast.LENGTH_SHORT).show()
-
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
                     //todo spot the animation and start connecting animation here
                     search_animation.visibility = View.INVISIBLE
                     connectToSearchedDevice()
-
                 }
 
             }
@@ -133,7 +132,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
             if (availableBluetoothDevice.isNotEmpty()) {
                 var moduleInfo: BluetoothDevice? = null
                 for (device in availableBluetoothDevice) {
-                   showToast("searching")
+                  // showToast("searching")
                     if (device.name == btModuleName) {   // found node mcu
                        moduleInfo = device
                         break
@@ -144,6 +143,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     // Again Search for available devices
                     // in second stage add a alert dialogue box for again searching the device
                     Toast.makeText(applicationContext,"Module not found",Toast.LENGTH_SHORT).show()
+                    startDiscovery()
                     searchForAvailableDevices()
                 } else {
                     //TODO connect with this device name (HC-06) ie module info implement same function
@@ -152,6 +152,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
                 }
             }else{
                 Log.d("empty","list is empty")
+                startDiscovery()
                 searchForAvailableDevices()
             }
         }catch (ex:Exception){
@@ -161,6 +162,8 @@ class SearchAndConnectActivity : AppCompatActivity() {
 
     private fun pairSearchedDevice(btDevice : BluetoothDevice){
         try {
+            connect_animation.visibility = View.VISIBLE
+            connect_animation.playAnimation()
             btDevice::class.java.getMethod("createBond").invoke(btDevice)
             val intentFilter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             registerReceiver(btPairReceiver,intentFilter)
@@ -171,12 +174,15 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
     private val btPairReceiver  = object:BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
+            showToast("StartedPairing")
               when(intent!!.action){
                   BluetoothDevice.ACTION_BOND_STATE_CHANGED->{
                       val state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,BluetoothDevice.ERROR)
                       val prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE,BluetoothDevice.ERROR)
                       if(state==BluetoothDevice.BOND_BONDED && prevState==BluetoothDevice.BOND_BONDING){
                           Log.d("Paired","Paired with device")
+                          connect_animation.visibility = View.INVISIBLE
+                          // TODO go to the next function of connecting it and change thw ending position of animation
                           showToast("paired")
                         }
                       }
@@ -215,6 +221,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
 
     private fun connectToPairedDevice(){
+
         val moduleInfo:BluetoothDeviceData?=null
         Toast.makeText(applicationContext,"Got paired Devices", Toast.LENGTH_LONG).show()
         for(device in btPairedDeviceList){

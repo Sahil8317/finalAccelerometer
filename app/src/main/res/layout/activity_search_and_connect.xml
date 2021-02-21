@@ -15,4 +15,13 @@
 
     </com.airbnb.lottie.LottieAnimationView>
 
+    <com.airbnb.lottie.LottieAnimationView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/connect_animation"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/connecting">
+
+    </com.airbnb.lottie.LottieAnimationView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
