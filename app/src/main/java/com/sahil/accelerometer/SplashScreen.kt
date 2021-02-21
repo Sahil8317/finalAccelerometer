@@ -28,7 +28,6 @@ class SplashScreen : AppCompatActivity() {
 
     }
 
-
    private fun checkBluetoothState(){
         if(bAdapter!!.isEnabled){
             Toast.makeText(applicationContext,"Bluetooth is Enable",Toast.LENGTH_SHORT).show()
