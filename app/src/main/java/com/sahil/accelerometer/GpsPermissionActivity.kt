@@ -1,9 +1,11 @@
 package com.sahil.accelerometer
 
+import android.animation.Animator
 import android.content.Intent
 import android.content.IntentSender
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.google.android.gms.common.api.ApiException
@@ -21,23 +23,7 @@ class GpsPermissionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gps_permission)
         okBluetooth.visibility = View.INVISIBLE
-        val data = DeviceData(this)
-        data.isLoggedInFirstTime()
-
-        if(DeviceData.isAlreadyUser){
-            // for old user
-          //  getPairedDevices()
-            //TODO Go to already a user fragment
-        }else{
-            print("get")
-            // means the user is new
-            //TODO navigate to new user activity / fragment
-           // checkPermission()
-          //  startDiscovery()
-           // searchForAvailableDevices()
-        }
         displayLocationSettingsRequest()
-
 
     }
 
@@ -82,8 +68,8 @@ class GpsPermissionActivity : AppCompatActivity() {
             requestCheck->{
                 if(resultCode== RESULT_OK){
                     // got GPS Location
-                    okBluetooth.visibility = View.VISIBLE
-                    okBluetooth.playAnimation()
+                    playAndStopAnimation()
+
                 }else{
                     // user Denied
                     Toast.makeText(applicationContext,"User Denied",Toast.LENGTH_LONG).show()
@@ -96,9 +82,34 @@ class GpsPermissionActivity : AppCompatActivity() {
     // TO show animation if GPS is already ON
    private fun showAnimation(){
         if(isGPSAlreadyOn){
-            okBluetooth.visibility = View.VISIBLE
-            okBluetooth.playAnimation()
+            playAndStopAnimation()
         }
     }
+
+    private fun playAndStopAnimation(){
+        okBluetooth.visibility = View.VISIBLE
+        okBluetooth.playAnimation()
+        okBluetooth.addAnimatorListener(object:Animator.AnimatorListener{
+            override fun onAnimationStart(p0: Animator?) {
+                Log.d("start","Animation Started")
+            }
+
+            override fun onAnimationEnd(p0: Animator?) {
+                Log.d("Ended","Animation Ended")
+                val intent = Intent(applicationContext,SearchAndConnectActivity::class.java)
+                startActivity(intent)
+
+            }
+
+            override fun onAnimationCancel(p0: Animator?) {
+            }
+
+            override fun onAnimationRepeat(p0: Animator?) {
+            }
+
+        })
+
+    }
+
 
 }

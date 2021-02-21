@@ -7,15 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".SplashScreen">
 
-    <fragment
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="androidx.navigation.fragment.NavHostFragment"
-        android:id="@+id/HostNavigatoion"
-        android:fitsSystemWindows="true"
-        app:navGraph = "@navigation/fragment_navigation">
 
-    </fragment>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
