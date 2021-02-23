@@ -2,6 +2,7 @@ package com.sahil.accelerometer
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,14 +13,24 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_search_and_connect.*
+import java.io.IOException
+import java.io.InputStream
+import java.util.*
+import kotlin.collections.ArrayList
 
 class SearchAndConnectActivity : AppCompatActivity() {
 
-    private val btModuleName = "LG OM4560(E5)"
-    private val btPairedDeviceList = ArrayList<BluetoothDeviceData>()
+    private val btModuleName = "Redmi"
+    private var isFirstSearch  = true
+    private var bluetoothDevice:BluetoothDevice?=null
+    private val btPairedDeviceList = ArrayList<BluetoothDevice>()
     private val availableDevices = ArrayList<BluetoothDeviceData>()
     private val availableBluetoothDevice = ArrayList<BluetoothDevice>()   // contains object of bluetooth device in built
     private var bAdapter : BluetoothAdapter?=null
+    private var btSocket:BluetoothSocket?=null
+    private var isStreamOpen = false
+    private var btInputStream: InputStream?=null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_and_connect)
@@ -34,7 +45,6 @@ class SearchAndConnectActivity : AppCompatActivity() {
             //  getPairedDevices()
             oldUser()
         }else{
-            print("get")
             newUser()
             // means the user is new
             // checkPermission()
@@ -51,7 +61,6 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private fun oldUser(){
         Log.d("old","old User")
         getPairedDevices()
-
     }
 
     private fun startDiscovery(){
@@ -78,11 +87,10 @@ class SearchAndConnectActivity : AppCompatActivity() {
                 intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
                 registerReceiver(btReceiver,intentFilter)
                 //  println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                //TODO Connect with the device named HC-06
+
             }else{
                 Toast.makeText(applicationContext,DeviceData.isBTEnabled.toString(),Toast.LENGTH_SHORT).show()
                 Toast.makeText(applicationContext,bAdapter!!.isEnabled.toString(),Toast.LENGTH_SHORT).show()
-
                 logMessage()
             }
         }catch (ex:Exception){
@@ -90,20 +98,9 @@ class SearchAndConnectActivity : AppCompatActivity() {
         }
     }
 
-    private fun connectToModule(moduleInfo: BluetoothDeviceData,tag:String){
-        // TODO 1. Implement this Function
-        try {
-            if(tag == "FromSearch"){
 
-            }else{
-                // from paired devices
+    private fun receiveData(){
 
-            }
-
-        }catch (ex:Exception){
-            Log.d("Exception",ex.toString())
-            println(ex)
-        }
 
     }
     private val btReceiver = object : BroadcastReceiver(){
@@ -135,6 +132,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
                   // showToast("searching")
                     if (device.name == btModuleName) {   // found node mcu
                        moduleInfo = device
+                        bluetoothDevice = device
                         break
                     }
                 }
@@ -143,6 +141,10 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     // Again Search for available devices
                     // in second stage add a alert dialogue box for again searching the device
                     Toast.makeText(applicationContext,"Module not found",Toast.LENGTH_SHORT).show()
+                    if(isFirstSearch) {
+                        getPairedDevices()
+                        isFirstSearch = false
+                    }
                     startDiscovery()
                     searchForAvailableDevices()
                 } else {
@@ -181,9 +183,9 @@ class SearchAndConnectActivity : AppCompatActivity() {
                       val prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE,BluetoothDevice.ERROR)
                       if(state==BluetoothDevice.BOND_BONDED && prevState==BluetoothDevice.BOND_BONDING){
                           Log.d("Paired","Paired with device")
-                          connect_animation.visibility = View.INVISIBLE
-                          // TODO go to the next function of connecting it and change thw ending position of animation
                           showToast("paired")
+                          //calling final function for connecting module
+                          connectToModule(bluetoothDevice!!)
                         }
                       }
               }
@@ -192,14 +194,49 @@ class SearchAndConnectActivity : AppCompatActivity() {
 
     }
 
+    private fun connectToModule(moduleInfo: BluetoothDevice){
+
+        try {
+            try {
+                /** UUID from android bluetooth app**/
+                btSocket = moduleInfo.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"))
+            }catch (ec:Exception){
+                Log.d("Socket ex",ec.toString())
+            }
+            try{
+                btSocket!!.connect()
+            }catch (e1:IOException){
+                e1.printStackTrace()
+                Log.d("socket ex","cannot connect to socket")
+                try{
+                    btSocket!!.close()
+                    Log.d("socket","socket closed")
+                }catch(e3:IOException){
+                    Log.d("Socket ex","Socket cannot be closed")
+                }
+            }
+            if(btSocket!!.isConnected){
+                showToast("Socket is connected to the module")
+                connect_animation.visibility = View.INVISIBLE
+            }else{
+                showToast("Error in connecting")
+            }
+        }catch (ex:Exception){
+            Log.d("Exception",ex.toString())
+            println(ex)
+        }
+    }
+
     private fun getPairedDevices(){
         Toast.makeText(applicationContext,"getting paired devices", Toast.LENGTH_SHORT).show()
         if(DeviceData.isBTEnabled && bAdapter!!.isEnabled) {
+            connect_animation.visibility = View.VISIBLE
+            connect_animation.playAnimation()
             try {
                 val btDevices = bAdapter!!.bondedDevices
                 if (btDevices.size > 0) {
                     for (device in btDevices) {
-                        btPairedDeviceList.add(BluetoothDeviceData(device.name, device.address))
+                        btPairedDeviceList.add(device)
                         Toast.makeText(applicationContext,device.name, Toast.LENGTH_SHORT).show()
                     }
                     connectToPairedDevice()
@@ -208,6 +245,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     Toast.makeText(applicationContext, "No Paired Device Found", Toast.LENGTH_SHORT)
                         .show()
                     Log.d("noFound", "Searching for all devices nearby")
+                    startDiscovery()
                     searchForAvailableDevices()
                 }
             }catch (ex:Exception){
@@ -215,28 +253,29 @@ class SearchAndConnectActivity : AppCompatActivity() {
             }
 
         }else{
+            showToast("Enable Bluetooth")
             logMessage()
         }
 
     }
 
     private fun connectToPairedDevice(){
-
-        val moduleInfo:BluetoothDeviceData?=null
+        var moduleInfo:BluetoothDevice?=null
         Toast.makeText(applicationContext,"Got paired Devices", Toast.LENGTH_LONG).show()
         for(device in btPairedDeviceList){
-            if(device.deviceName==btModuleName){
-                moduleInfo!!.deviceName = device.deviceName
-                moduleInfo.deviceAddress = device.deviceAddress
+            if(device.name==btModuleName){
+               moduleInfo = device
                 break
             }
         }
         if(moduleInfo==null){
             Log.d("not found","Not Found in Paired Devices")
+            connect_animation.visibility=View.INVISIBLE
+            startDiscovery()
             searchForAvailableDevices()
         }else{
             //TODO connect with this device name (HC-06) ie module info
-            connectToModule(moduleInfo,"FromPairedDevice")
+            connectToModule(moduleInfo)
 
         }
     }
@@ -246,6 +285,24 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
     private fun showToast(msg:String){
         Toast.makeText(applicationContext,msg,Toast.LENGTH_SHORT).show()
+    }
+
+    inner class ConnectThread(mSocket:BluetoothSocket) : Thread(){
+       private var mInputStream:InputStream?=null
+        init {
+            try {
+              if(btSocket!=null && btSocket!!.isConnected){
+                  btInputStream = btSocket!!.inputStream
+                  mInputStream = btInputStream
+                  showToast("Got Input Stream")
+                  Log.d("Stream","Got input stream")
+              }
+            }catch (e:IOException){
+                e.printStackTrace()
+                Log.d("stream ex","cannot get input stream")
+            }
+        }
+
     }
 
 }
