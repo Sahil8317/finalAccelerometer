@@ -1,6 +1,7 @@
 package com.sahil.accelerometer
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
@@ -20,7 +21,7 @@ import kotlin.collections.ArrayList
 
 class SearchAndConnectActivity : AppCompatActivity() {
 
-    private val btModuleName = "Redmi"
+    private val btModuleName = "HC05"
     private var isFirstSearch  = true
     private var bluetoothDevice:BluetoothDevice?=null
     private val btPairedDeviceList = ArrayList<BluetoothDevice>()
@@ -30,6 +31,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private var btSocket:BluetoothSocket?=null
     private var isStreamOpen = false
     private var btInputStream: InputStream?=null
+    private var bufferReader :ByteArray?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +53,11 @@ class SearchAndConnectActivity : AppCompatActivity() {
             //  startDiscovery()
             // searchForAvailableDevices()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        btSocket!!.close()
     }
     private fun newUser(){
         Log.d("new","New User")
@@ -105,23 +112,32 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
     private val btReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
-            val action = intent!!.action
-            println("Received #################################")
-            when(action){
-                BluetoothDevice.ACTION_FOUND->{
-                    val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    availableDevices.add(BluetoothDeviceData(device!!.name,device.address))
-                    availableBluetoothDevice.add(device)
-                    Toast.makeText(applicationContext,device.name.toString(), Toast.LENGTH_SHORT).show()
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
-                    //todo spot the animation and start connecting animation here
-                    search_animation.visibility = View.INVISIBLE
-                    connectToSearchedDevice()
-                }
+            try {
+                val action = intent!!.action
+                println("Received #################################")
+                when (action) {
+                    BluetoothDevice.ACTION_FOUND -> {
+                        val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                        availableDevices.add(BluetoothDeviceData(device!!.name, device.address))
+                        availableBluetoothDevice.add(device)
+                        Toast.makeText(
+                            applicationContext,
+                            device.name.toString(),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                        //todo spot the animation and start connecting animation here
+                        search_animation.visibility = View.INVISIBLE
+                        connectToSearchedDevice()
+                    }
 
+                }
+            }catch(ex:Exception){
+                Log.d("Search er",ex.toString())
             }
         }
+
     }
 
     private fun connectToSearchedDevice() {
@@ -160,6 +176,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
         }catch (ex:Exception){
             Log.d("error",ex.toString())
         }
+
     }
 
     private fun pairSearchedDevice(btDevice : BluetoothDevice){
@@ -184,6 +201,10 @@ class SearchAndConnectActivity : AppCompatActivity() {
                       if(state==BluetoothDevice.BOND_BONDED && prevState==BluetoothDevice.BOND_BONDING){
                           Log.d("Paired","Paired with device")
                           showToast("paired")
+                          /** saving data in preference**/
+                          val device = DeviceData(applicationContext)
+                          device.saveNodeMCUData(bluetoothDevice!!.name,bluetoothDevice!!.address)
+                          device.saveBTData()
                           //calling final function for connecting module
                           connectToModule(bluetoothDevice!!)
                         }
@@ -195,11 +216,10 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
 
     private fun connectToModule(moduleInfo: BluetoothDevice){
-
         try {
             try {
                 /** UUID from android bluetooth app**/
-                btSocket = moduleInfo.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"))
+                btSocket = moduleInfo.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
             }catch (ec:Exception){
                 Log.d("Socket ex",ec.toString())
             }
@@ -218,6 +238,8 @@ class SearchAndConnectActivity : AppCompatActivity() {
             if(btSocket!!.isConnected){
                 showToast("Socket is connected to the module")
                 connect_animation.visibility = View.INVISIBLE
+                startThread()
+
             }else{
                 showToast("Error in connecting")
             }
@@ -225,6 +247,15 @@ class SearchAndConnectActivity : AppCompatActivity() {
             Log.d("Exception",ex.toString())
             println(ex)
         }
+    }
+
+    private fun startThread(){
+        Thread(Runnable {
+                if(btSocket!!.isConnected){
+                    ConnectThread(btSocket!!).start()
+                    Log.d("started","Thread Started")
+                }
+        }).start()
     }
 
     private fun getPairedDevices(){
@@ -293,9 +324,14 @@ class SearchAndConnectActivity : AppCompatActivity() {
             try {
               if(btSocket!=null && btSocket!!.isConnected){
                   btInputStream = btSocket!!.inputStream
+                  isStreamOpen=true
                   mInputStream = btInputStream
-                  showToast("Got Input Stream")
+                 // showToast("Got Input Stream")
                   Log.d("Stream","Got input stream")
+              }
+                else{
+                    isStreamOpen=false
+                  Log.d("socket unavailable","cannot connect")
               }
             }catch (e:IOException){
                 e.printStackTrace()
@@ -303,6 +339,30 @@ class SearchAndConnectActivity : AppCompatActivity() {
             }
         }
 
+        override fun run() {
+            try {
+                if(btSocket!!.isConnected && mInputStream!=null){
+                    Log.d("connected","Starting to listen on incoming calls/Messages")
+                    while(isStreamOpen){
+                        val bArr = ByteArray(1024)
+                        while(btSocket!!.isConnected){
+                            val copyOf = bArr.copyOf(btInputStream!!.read(bArr))
+                            val currentDateStamp = Date()
+                            Conversion(currentDateStamp,copyOf)
+                            //printData(copyOf)
+                        }
+                    }
+                }
+                super.run()
+            }catch (e1:IOException){
+                Log.d("Error",e1.toString())
+                //TODO Implement the function when module is disconnected handle the exception
+            }
+
+        }
+
     }
+
+
 
 }

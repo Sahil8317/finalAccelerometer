@@ -17,7 +17,7 @@ class DeviceData {
          userReference = context.getSharedPreferences("BTData",Context.MODE_PRIVATE)
     }
 
-    fun saveNodeMCUData(nodeMcuDeviceName:String,nodeMcuDeviceAddress:String,nodeMcuDeviceUUID:String){
+    fun saveNodeMCUData(nodeMcuDeviceName:String,nodeMcuDeviceAddress:String){
         this.nodeMcuDeviceAddress = nodeMcuDeviceAddress
         this.nodeMcuDeviceName = nodeMcuDeviceName
     }
