@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.internal.synchronized
 
-@Database(entities = [AccelerometerData::class],version = 1,exportSchema = true)
-
+@Database(entities = [AccelerometerData::class],version = 1,exportSchema = false)
     abstract class AccelerometerDatabase:RoomDatabase() {
 
         abstract fun AccelerometerDAO():AccelerometerDAO
@@ -20,7 +20,7 @@ import androidx.room.RoomDatabase
                 if(checkInstance!=null){
                     return  checkInstance
                 }
-                val instance = Room.databaseBuilder(
+               val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AccelerometerDatabase::class.java,
                     "accelerometer_database"

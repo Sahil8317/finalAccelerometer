@@ -1,7 +1,6 @@
 package com.sahil.accelerometer
 
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
@@ -31,7 +30,14 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private var btSocket:BluetoothSocket?=null
     private var isStreamOpen = false
     private var btInputStream: InputStream?=null
-    private var bufferReader :ByteArray?=null
+    private var writeData = "B"
+    private var isInsertedToDatabase = false
+    private var dataList = ArrayList<String>()
+
+    init {
+        val data = DeviceData(this)
+        data.isLoggedInFirstTime()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,12 +45,11 @@ class SearchAndConnectActivity : AppCompatActivity() {
         search_animation.visibility = View.INVISIBLE
         connect_animation.visibility = View.INVISIBLE
         bAdapter = BluetoothAdapter.getDefaultAdapter()
-        val data = DeviceData(this)
-        data.isLoggedInFirstTime()
 
         if(DeviceData.isAlreadyUser){
             // for old user
             //  getPairedDevices()
+                
             oldUser()
         }else{
             newUser()
@@ -105,11 +110,6 @@ class SearchAndConnectActivity : AppCompatActivity() {
         }
     }
 
-
-    private fun receiveData(){
-
-
-    }
     private val btReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
             try {
@@ -343,15 +343,36 @@ class SearchAndConnectActivity : AppCompatActivity() {
             try {
                 if(btSocket!!.isConnected && mInputStream!=null){
                     Log.d("connected","Starting to listen on incoming calls/Messages")
-                    while(isStreamOpen){
-                        val bArr = ByteArray(1024)
-                        while(btSocket!!.isConnected){
-                            val copyOf = bArr.copyOf(btInputStream!!.read(bArr))
-                            val currentDateStamp = Date()
-                            Conversion(currentDateStamp,copyOf)
-                            //printData(copyOf)
-                        }
+
+                    if(btSocket!!.isConnected && isStreamOpen) {
+                        do {
+                            val outputStream = btSocket!!.outputStream
+                              outputStream.write(writeData.toByteArray())
+                            var finalString = ""
+                            while(true) { // loop for each batch of data
+                                val data = btInputStream!!.read()
+                                if(data==40){                       // means first batch of data is completed and delay started
+                                    break
+                                }
+                                if(data!=44) {                           // not equal to comma
+                                    val characterData = data.toChar()
+                                    finalString =finalString+ characterData.toString()
+                                }
+                                if(data==44){         // for separating  values
+                                    dataList.add(finalString)    // adding each coordinate to list
+                                    finalString = ""
+                                }
+                            }
+                            //println(finalString)
+//                            for(d in datalist){
+//                                println(d)
+//                            }
+//                            println(datalist.size)
+                          isInsertedToDatabase = Conversion(applicationContext,dataList).insertDataInDatabase()
+                        } while (isInsertedToDatabase)
                     }
+                        Log.d("out","got out")
+
                 }
                 super.run()
             }catch (e1:IOException){
