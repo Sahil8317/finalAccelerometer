@@ -24,4 +24,13 @@
 
     </com.airbnb.lottie.LottieAnimationView>
 
+    <com.airbnb.lottie.LottieAnimationView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/bikeAnimation"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/bikeanimation">
+
+    </com.airbnb.lottie.LottieAnimationView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

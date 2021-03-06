@@ -44,6 +44,8 @@ class DeviceData {
     }
 
 
+
+
     companion object{
         var isAlreadyUser:Boolean=true
         var isBTEnabled:Boolean = false

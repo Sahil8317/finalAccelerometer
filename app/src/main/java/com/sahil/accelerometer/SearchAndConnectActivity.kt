@@ -1,5 +1,6 @@
 package com.sahil.accelerometer
 
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -9,9 +10,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import kotlinx.android.synthetic.main.activity_search_and_connect.*
 import java.io.IOException
 import java.io.InputStream
@@ -34,14 +38,14 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private var isInsertedToDatabase = false
     private var dataList = ArrayList<String>()
 
-    init {
-        val data = DeviceData(this)
-        data.isLoggedInFirstTime()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_and_connect)
+        supportActionBar!!.hide()
+        val data = DeviceData(applicationContext)
+        data.isLoggedInFirstTime()
+        bikeAnimation.visibility = View.INVISIBLE
         search_animation.visibility = View.INVISIBLE
         connect_animation.visibility = View.INVISIBLE
         bAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -49,7 +53,6 @@ class SearchAndConnectActivity : AppCompatActivity() {
         if(DeviceData.isAlreadyUser){
             // for old user
             //  getPairedDevices()
-                
             oldUser()
         }else{
             newUser()
@@ -72,6 +75,8 @@ class SearchAndConnectActivity : AppCompatActivity() {
     }
     private fun oldUser(){
         Log.d("old","old User")
+        connect_animation.visibility = View.VISIBLE
+        connect_animation.playAnimation()
         getPairedDevices()
     }
 
@@ -165,7 +170,11 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     searchForAvailableDevices()
                 } else {
                     //TODO connect with this device name (HC-06) ie module info implement same function
-                        pairSearchedDevice(moduleInfo)
+                       if(isAlreadyPaired(moduleInfo)){
+                           connectToModule(moduleInfo)
+                       }else{
+                           pairSearchedDevice(moduleInfo)
+                       }
                         //connectToModule(moduleInfo, "FromSearch")
                 }
             }else{
@@ -177,6 +186,12 @@ class SearchAndConnectActivity : AppCompatActivity() {
             Log.d("error",ex.toString())
         }
 
+    }
+
+    private fun isAlreadyPaired(moduleInfo:BluetoothDevice):Boolean{
+        val state = moduleInfo.bondState
+        println(state)
+        return state == BluetoothDevice.BOND_BONDED
     }
 
     private fun pairSearchedDevice(btDevice : BluetoothDevice){
@@ -345,31 +360,63 @@ class SearchAndConnectActivity : AppCompatActivity() {
                     Log.d("connected","Starting to listen on incoming calls/Messages")
 
                     if(btSocket!!.isConnected && isStreamOpen) {
-                        do {
-                            val outputStream = btSocket!!.outputStream
-                              outputStream.write(writeData.toByteArray())
-                            var finalString = ""
-                            while(true) { // loop for each batch of data
-                                val data = btInputStream!!.read()
-                                if(data==40){                       // means first batch of data is completed and delay started
-                                    break
+                        try {
+                            runOnUiThread(object:Runnable{
+                                override fun run() {
+                                    bikeAnimation.visibility = View.VISIBLE
+                                    bikeAnimation.playAnimation()
                                 }
-                                if(data!=44) {                           // not equal to comma
-                                    val characterData = data.toChar()
-                                    finalString =finalString+ characterData.toString()
+                            } )
+                            do {
+                                val outputStream = btSocket!!.outputStream
+                                outputStream.write(writeData.toByteArray())    // writing  B in module
+                                var finalString = ""
+
+                                while(true) { // loop for each batch of data
+                                    val data = btInputStream!!.read()
+                                    if(data==40){                       // means first batch of data is completed and delay started
+                                        break
+                                    }
+                                    if(data!=44) {                           // not equal to comma
+                                        val characterData = data.toChar()
+                                        finalString =finalString+ characterData.toString()
+                                    }
+                                    if(data==44){         // for separating  values
+                                        dataList.add(finalString)    // adding each coordinate to list
+                                        finalString = ""
+                                    }
                                 }
-                                if(data==44){         // for separating  values
-                                    dataList.add(finalString)    // adding each coordinate to list
-                                    finalString = ""
-                                }
-                            }
-                            //println(finalString)
+                                //println(finalString)
 //                            for(d in datalist){
 //                                println(d)
 //                            }
 //                            println(datalist.size)
-                          isInsertedToDatabase = Conversion(applicationContext,dataList).insertDataInDatabase()
-                        } while (isInsertedToDatabase)
+                                isInsertedToDatabase = Conversion(applicationContext,dataList).insertDataInDatabase()
+                            } while (isInsertedToDatabase)
+                        }catch (ex:IOException){
+                            println(ex)
+                            Log.d("closed","Stream closed or socket closed handle it")
+                            runOnUiThread(object:Runnable{
+                                override fun run() {
+                                    showDialogBox()
+                                }
+                            } )
+                            Handler(Looper.getMainLooper()).post(object :Runnable{
+                                override fun run() {
+                                        bikeAnimation.visibility =
+                                            View.INVISIBLE       // stopping animation
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Module closed",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                }
+
+                            })
+
+                        }
+
                     }
                         Log.d("out","got out")
 
@@ -378,12 +425,34 @@ class SearchAndConnectActivity : AppCompatActivity() {
             }catch (e1:IOException){
                 Log.d("Error",e1.toString())
                 //TODO Implement the function when module is disconnected handle the exception
+
             }
 
         }
 
     }
+     fun showDialogBox(){
+         Log.d("close","Module closed")
+         val dialogBuilder = AlertDialog.Builder(this)
+         dialogBuilder.setTitle("Module Closed")
+         dialogBuilder.setMessage("is your ride ended?")
 
+         dialogBuilder.setPositiveButton("Yes"){
+                 _, _ ->
+             Log.d("Yes","selected yes ride ended")
+             // TODO Go to main activity to show all readings
+             // TODO Form a CSV file of the readings and get last id
+              FormCsvFile(applicationContext)
+             val intent = Intent(applicationContext,MainActivity::class.java)
+             startActivity(intent)
+         }
+         dialogBuilder.setNegativeButton("No"){
+                 _,_->
+             Log.d("No","Try to connect again to the module")
+             getPairedDevices()
+         }
+         dialogBuilder.show()
+     }
 
 
 }

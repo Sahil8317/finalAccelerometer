@@ -45,5 +45,6 @@ dependencies {
     implementation "androidx.room:room-ktx:2.2.6"
     // optional - Test helpers
     testImplementation "androidx.room:room-testing:2.2.6"
+    implementation("com.github.doyaaaaaken:kotlin-csv-jvm:0.15.1")
 
 }

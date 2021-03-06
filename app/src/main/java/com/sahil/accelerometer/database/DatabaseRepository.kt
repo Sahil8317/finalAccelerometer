@@ -7,7 +7,9 @@ class DatabaseRepository(context: Context) {
 
     init {
          roomDAO = AccelerometerDatabase.getDatabase(context).AccelerometerDAO()
+
     }
+    val readingList:List<AccelerometerData> = roomDAO!!.readAllReadings()
 
    fun addData(data:AccelerometerData){
       roomDAO!!.addData(data)

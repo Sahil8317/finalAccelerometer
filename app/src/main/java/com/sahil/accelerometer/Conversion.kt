@@ -12,7 +12,6 @@ import kotlin.collections.ArrayList
 class Conversion {
     private var repository:DatabaseRepository?=null
     private var context:Context?=null
-    private var delayStarted = false
     private var dataList = ArrayList<String>()
     private var floatDataList = ArrayList<Float>()
 
@@ -63,6 +62,7 @@ class Conversion {
 
     }
 
+
     private fun convertToFloat():Boolean{
         if(dataList.isNotEmpty()){
             for(data in dataList){
@@ -74,15 +74,18 @@ class Conversion {
         return floatDataList.isNotEmpty()    // indicating that all values are converted
     }
     private fun getValue(d:String):Float{
-        var b = d.split("-")
-        if(b[1] == ""){
-            b = d.split("--")
+        val errorVale = 1.0
+        return try{
+            var b = d.split("-")
+            if(b[1] == ""){
+                b = d.split("--")
+            }
+            b[1].toFloat()
+        }catch(ex:IOException){
+            Log.d("Error",ex.toString())
+            errorVale.toFloat()
         }
-        return b[1].toFloat()
-    }
-
-    companion object{
-        var isConverted:Boolean = false
 
     }
+
 }
