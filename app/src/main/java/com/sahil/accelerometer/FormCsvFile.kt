@@ -18,7 +18,7 @@ import java.util.ArrayList
 
 class FormCsvFile {
     private var repository: DatabaseRepository?=null
-    private lateinit var context:Context
+    private var context:Context
    private  var readingList : List<AccelerometerData>
     constructor(context: Context){
         this.context = context
@@ -74,11 +74,10 @@ class FormCsvFile {
     }
 
     fun openCsvFile(){
-
             try {
                 val uri = FileProvider.getUriForFile(context,"com.sahil.accelerometer.provider", csvFile)
                 val intent = Intent(Intent.ACTION_VIEW)
-                val type = context.contentResolver.getType(uri)   // getting type of file(csv in out case)
+                val type = context.contentResolver.getType(uri)   // getting type of file(csv in our case)
                 intent.setDataAndType(uri,type)
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)

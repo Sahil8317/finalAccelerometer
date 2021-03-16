@@ -1,2 +1,10 @@
 include ':app'
+setBinding(new Binding([gradle: this]))
+evaluate(new File(
+  settingsDir,
+  '../accelerometer_flutter_module/.android/include_flutter.groovy'
+))
 rootProject.name = "Accelerometer"
+
+include ':accelerometer_flutter_module'
+project(':accelerometer_flutter_module').projectDir = new File('../accelerometer_flutter_module')

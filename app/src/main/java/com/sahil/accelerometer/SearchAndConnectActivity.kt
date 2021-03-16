@@ -16,6 +16,11 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugins.GeneratedPluginRegistrant
+import io.flutter.view.FlutterMain
 import kotlinx.android.synthetic.main.activity_search_and_connect.*
 import java.io.IOException
 import java.io.InputStream
@@ -37,6 +42,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private var writeData = "B"
     private var isInsertedToDatabase = false
     private var dataList = ArrayList<String>()
+    private lateinit var secondFlutterEngine :FlutterEngine
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -440,10 +446,8 @@ class SearchAndConnectActivity : AppCompatActivity() {
          dialogBuilder.setPositiveButton("Yes"){
                  _, _ ->
              Log.d("Yes","selected yes ride ended")
-             // TODO Go to main activity to show all readings
-             // TODO Form a CSV file of the readings and get last id
               FormCsvFile(applicationContext)
-             val intent = Intent(applicationContext,MainActivity::class.java)
+             val intent = Intent(applicationContext,MainPageFlutter::class.java)
              startActivity(intent)
          }
          dialogBuilder.setNegativeButton("No"){

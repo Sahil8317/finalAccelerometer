@@ -10,9 +10,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         supportActionBar!!.hide()
-        val csvFile = FormCsvFile(this)
+
         buDownload.setOnClickListener {
-            csvFile.openCsvFile()
+
         }
     }
 

@@ -11,16 +11,30 @@ import android.widget.Toast
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugins.GeneratedPluginRegistrant
+import io.flutter.view.FlutterMain
 import kotlinx.android.synthetic.main.activity_gps_permission.*
 
 class GpsPermissionActivity : AppCompatActivity() {
     private val requestCheck = 55
     private var isGPSAlreadyOn = false
+    lateinit var newflutterEngine: FlutterEngine
+
     override fun onCreate(savedInstanceState: Bundle?) {
         requestWindowFeature(1)
         window.setFlags(1024,1024)
         supportActionBar?.hide()
         super.onCreate(savedInstanceState)
+        /** Pre Warming Flutter Engine**/
+        newflutterEngine = FlutterEngine(this)
+        newflutterEngine.dartExecutor.executeDartEntrypoint(
+            DartExecutor.DartEntrypoint(FlutterMain.findAppBundlePath(),"main")
+        )
+        FlutterEngineCache.getInstance().put("firstEngine",newflutterEngine)
+        GeneratedPluginRegistrant.registerWith(newflutterEngine)
         setContentView(R.layout.activity_gps_permission)
         okBluetooth.visibility = View.INVISIBLE
         displayLocationSettingsRequest()
@@ -87,6 +101,7 @@ class GpsPermissionActivity : AppCompatActivity() {
     }
 
     private fun playAndStopAnimation(){
+
         okBluetooth.visibility = View.VISIBLE
         okBluetooth.playAnimation()
         okBluetooth.addAnimatorListener(object:Animator.AnimatorListener{
@@ -96,7 +111,7 @@ class GpsPermissionActivity : AppCompatActivity() {
 
             override fun onAnimationEnd(p0: Animator?) {
                 Log.d("Ended","Animation Ended")
-                val intent = Intent(applicationContext,SearchAndConnectActivity::class.java)
+                val intent = Intent(applicationContext,MainPageFlutter::class.java)
                 startActivity(intent)
 
             }
