@@ -21,7 +21,7 @@ import kotlinx.android.synthetic.main.activity_gps_permission.*
 class GpsPermissionActivity : AppCompatActivity() {
     private val requestCheck = 55
     private var isGPSAlreadyOn = false
-    lateinit var newflutterEngine: FlutterEngine
+    private lateinit var newflutterEngine: FlutterEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         requestWindowFeature(1)
@@ -101,7 +101,6 @@ class GpsPermissionActivity : AppCompatActivity() {
     }
 
     private fun playAndStopAnimation(){
-
         okBluetooth.visibility = View.VISIBLE
         okBluetooth.playAnimation()
         okBluetooth.addAnimatorListener(object:Animator.AnimatorListener{

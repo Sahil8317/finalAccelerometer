@@ -1,0 +1,3 @@
+[submodule "accelerometer_flutter_module"]
+	path = accelerometer_flutter_module
+	url = https://github.com/Sahil8317/accelerometer_flutter_module

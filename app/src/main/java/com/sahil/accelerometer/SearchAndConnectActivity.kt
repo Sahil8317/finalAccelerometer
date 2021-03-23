@@ -1,6 +1,5 @@
 package com.sahil.accelerometer
 
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -17,10 +16,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.FlutterEngineCache
-import io.flutter.embedding.engine.dart.DartExecutor
-import io.flutter.plugins.GeneratedPluginRegistrant
-import io.flutter.view.FlutterMain
 import kotlinx.android.synthetic.main.activity_search_and_connect.*
 import java.io.IOException
 import java.io.InputStream

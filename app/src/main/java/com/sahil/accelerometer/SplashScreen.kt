@@ -10,7 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 
-class SplashScreen : AppCompatActivity() {
+open class SplashScreen : AppCompatActivity() {
 
    // var TAG:String = "SplashScreen"
     private var bluetoothAdapterRequestCode = 123
