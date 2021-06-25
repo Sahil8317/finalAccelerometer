@@ -38,9 +38,7 @@ class DeviceData {
 
     fun isLoggedInFirstTime(){
         val data = userReference!!.getString("nodeMcuDeviceAddress","empty")
-        if(data.equals("empty")){
-            isAlreadyUser=false
-        }
+        isAlreadyUser = !data.equals("empty")
     }
 
 

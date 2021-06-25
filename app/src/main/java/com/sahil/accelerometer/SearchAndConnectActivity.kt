@@ -1,6 +1,7 @@
 package com.sahil.accelerometer
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
@@ -31,6 +32,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private val availableDevices = ArrayList<BluetoothDeviceData>()
     private val availableBluetoothDevice = ArrayList<BluetoothDevice>()   // contains object of bluetooth device in built
     private var bAdapter : BluetoothAdapter?=null
+    private var data:DeviceData?=null
     private var btSocket:BluetoothSocket?=null
     private var isStreamOpen = false
     private var btInputStream: InputStream?=null
@@ -44,14 +46,15 @@ class SearchAndConnectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_and_connect)
         supportActionBar!!.hide()
-        val data = DeviceData(applicationContext)
-        data.isLoggedInFirstTime()
+         data = DeviceData(applicationContext)
+        data!!.isLoggedInFirstTime()
         bikeAnimation.visibility = View.INVISIBLE
         search_animation.visibility = View.INVISIBLE
         connect_animation.visibility = View.INVISIBLE
         bAdapter = BluetoothAdapter.getDefaultAdapter()
 
         if(DeviceData.isAlreadyUser){
+            println("@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             // for old user
             //  getPairedDevices()
             oldUser()
@@ -172,7 +175,9 @@ class SearchAndConnectActivity : AppCompatActivity() {
                 } else {
                     //TODO connect with this device name (HC-06) ie module info implement same function
                        if(isAlreadyPaired(moduleInfo)){
+
                            connectToModule(moduleInfo)
+
                        }else{
                            pairSearchedDevice(moduleInfo)
                        }
@@ -192,7 +197,14 @@ class SearchAndConnectActivity : AppCompatActivity() {
     private fun isAlreadyPaired(moduleInfo:BluetoothDevice):Boolean{
         val state = moduleInfo.bondState
         println(state)
+        if(state==BluetoothDevice.BOND_BONDED){
+            if(!DeviceData.isAlreadyUser){
+                data!!.saveNodeMCUData(moduleInfo.name,moduleInfo.address)
+                data!!.saveBTData()
+            }
+        }
         return state == BluetoothDevice.BOND_BONDED
+
     }
 
     private fun pairSearchedDevice(btDevice : BluetoothDevice){
@@ -443,6 +455,7 @@ class SearchAndConnectActivity : AppCompatActivity() {
              Log.d("Yes","selected yes ride ended")
               FormCsvFile(applicationContext)
              val intent = Intent(applicationContext,MainPageFlutter::class.java)
+             finish()
              startActivity(intent)
          }
          dialogBuilder.setNegativeButton("No"){
