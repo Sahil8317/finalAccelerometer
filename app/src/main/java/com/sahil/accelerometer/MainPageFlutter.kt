@@ -102,6 +102,7 @@ class MainPageFlutter : FlutterActivity() {
                             override fun onVerificationFailed(p0: FirebaseException) {
                                 Toast.makeText(context,"failed to verify phone number",Toast.LENGTH_SHORT).show()
                                 result.success("failed 2")   // failed to send code try after some time
+                                
                             }
 
                             override fun onCodeSent(verificationID: String, p1: PhoneAuthProvider.ForceResendingToken) {
