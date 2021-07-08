@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/../accelerometer_flutter_module" />
             <option value="$PROJECT_DIR$/../accelerometer_flutter_module/.android/Flutter" />
+            <option value="C:/src/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences-2.0.6/android" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

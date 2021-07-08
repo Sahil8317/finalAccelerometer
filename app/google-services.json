@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "670302512613",
+    "project_id": "accelerometer-4951d",
+    "storage_bucket": "accelerometer-4951d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670302512613:android:5bae6901d40bf230053b0c",
+        "android_client_info": {
+          "package_name": "com.sahil.accelerometer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670302512613-e810l4o0tiusoqtiednuqoj088kvcca8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAirif9Z1RpUDKBmSIqmWv03u3dd4Wx-8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670302512613-e810l4o0tiusoqtiednuqoj088kvcca8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,7 @@
 package com.sahil.accelerometer
 
 import android.animation.Animator
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import androidx.appcompat.app.AppCompatActivity
